@@ -12,7 +12,7 @@ narratives = [
     'this place sucks',
     'dont buy this',
     'too bougie for you',
-    'perfect property!!!'
+    'perfect property!!!!'
 ]
 
 @app.route('/narrative')
