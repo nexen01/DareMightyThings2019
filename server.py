@@ -1,13 +1,13 @@
-from flask import Flask, escape, request
+from flask import Flask, escape, request, render_template
 import json
 
 app = Flask(__name__)
 
 @app.route('/')
 def index():
-    return '<html><body><h1>HELLO!</h1></body></html>'
+    return render_template('index.html')
 
 @app.route('/narrative')
 def narrative():
-    address = request.args.get('address')
+    address = escape(request.args.get('address'))
     return json.dumps({'address': address})
