@@ -7,9 +7,10 @@ app = Flask(__name__)
 
 API_KEY = ""
 with open('auth.json') as json_file:
-    global API_KEY
     data = json.load(json_file)
     API_KEY = data['key']
+
+print(API_KEY)
 
 MAPS_SRC_URL_BASE = "https://www.google.com/maps/embed/v1/place?key="+API_KEY+"&q="
 
