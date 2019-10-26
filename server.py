@@ -5,7 +5,12 @@ from urllib import parse
 
 app = Flask(__name__)
 
-API_KEY = "AIzaSyDPMXXL1cetYqV1_1Fz8qhIgpbznmb4uyQ"
+API_KEY = ""
+with open('auth.json') as json_file:
+    global API_KEY
+    data = json.load(json_file)
+    API_KEY = data['key']
+
 MAPS_SRC_URL_BASE = "https://www.google.com/maps/embed/v1/place?key="+API_KEY+"&q="
 
 @app.route('/')
