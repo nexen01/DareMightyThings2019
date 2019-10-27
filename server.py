@@ -149,7 +149,7 @@ def googleData(row):
 
     jsonString = []
     for d in data:
-        if(is None):
+        if(d is None):
             continue
         jsonString.append({
                 'name': d[0],
@@ -174,24 +174,14 @@ def narrative():
     address = row['Address'] + ', ' + row['City'] + " " + row["State"]
     print("Narrative Request Recieved: Address=" + address + " place_id=" +prop_id)    
 
-    if prop_id in list(property_data["PropertyID"]):
-        jsonString = []
-
+    if prop_id in list(property_data["PropertyID"]):       
        
-        if(row["Narrative"] == ""):
-            print(row["Narrative"])
-            row["Narrative"] = get_narrative(row)
-            print("Caching")
-            property_data.to_pickle("prop_data.pkl")
-        else:
-            print("Already Cached")
 
-        jsonString.append({
-            'narrative': row["Narrative"],
+        #jsonString.append(googleData(row))
+        return json.dumps({
+            'narrative': get_narrative(row),
             'prop_id': prop_id
         })
-        jsonString.append(googleData(row))
-        return json.dumps(jsonString)
     return json.dumps({
         'error': 'Invalid property ID.'
     })
