@@ -35,7 +35,26 @@ function displayPlace(place) {
 }
 
 function handleOnChange() {
-    
+    const query = encodeURI($('#usr12').val());
+
+    $("#results").empty();
+    $("#results").append($("<p></p>").text("Loading..."));
+
+    const url = window.location.href + `search?address=${query}`;
+    console.log(url);
+    fetch(url).then(function(response) {
+        return response.json();
+    }).then(function(json) {
+        console.log(json);
+        $("#results").empty();
+        for (let i = 0; i < json.properties.length; i++) {
+            const property = json.properties[i];
+            const row = $("<tr></tr>");
+            row.append($("<p></p>").text(`Address: ${property.address}`));
+            row.append($("<p></p>").text(`Property ID: ${property.prop_id}`));
+            $("#results").append(row);
+        }
+    });
 }
 
 $(function() {
