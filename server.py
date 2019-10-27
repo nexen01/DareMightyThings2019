@@ -4,6 +4,8 @@ import random
 from urllib import parse
 import pandas as pd
 from subprocess import Popen, PIPE, STDOUT
+import googlemaps
+from datetime import datetime
 
 print('Loading data...')
 
@@ -22,56 +24,197 @@ avail_labels = '\t'.join(availability_data.columns)
 app = Flask(__name__)
 
 API_KEY = ""
+
+
 with open('auth.json') as json_file:
     data = json.load(json_file)
     API_KEY = data['key']
 
+
+
+gmaps = googlemaps.Client(key=API_KEY)
+
+#airport
 print("Loaded data!")
 
 @app.route('/')
 def index():
     return render_template('index.html', api_key=API_KEY)
 
-def get_narrative(prop_id):
+def get_narrative(prop_id,restaurants):
     prop_result = property_data[property_data.PropertyID == prop_id].iloc[0]
     prop_str = '\t'.join(str(val) for val in prop_result)
     avail_result = availability_data[availability_data.PropertyID == prop_id].iloc[0]
     avail_str = '\t'.join(str(val) for val in avail_result)
-    p = Popen(['java', '-jar', 'NarrativeGenerator.jar', prop_labels, prop_str, avail_labels, avail_str], stdout=PIPE, stderr=STDOUT)
+
+    bestRating = 0
+    bestRestaunt = None
+    for r in restaurants:
+        if(r[1]>bestRating):
+            bestRating = r[1]
+            bestRestaunt = r
+
+    rest_str = '\t'.join(str(val) for val in bestRestaunt)
+
+    p = Popen(['java', '-jar', 'NarrativeGenerator.jar', prop_labels, prop_str, avail_labels, avail_str, rest_str], stdout=PIPE, stderr=STDOUT)
     output = next(p.stdout).decode('ascii')
     return output
 
 @app.route('/narrative')
 def narrative():
-    place_id = escape(request.args.get('place_id'))
-    print(place_id)
-    prop_ids = list(place_prop_id[place_prop_id.PlaceID == place_id]["PropertyID"])
-    if len(prop_ids) > 0:
-        prop_id = str(prop_ids[0])
-        if prop_id in list(availability_data["PropertyID"]):
-            return json.dumps({
-                'narrative': get_narrative(prop_id),
-                'prop_id': prop_id
-            })
+    prop_id = escape(request.args.get('prop_id'))
+    address = escape(request.args.get('address'))
+    print("Narrative Request Recieved: Address=" + address + " place_id=" +prop_id)
+    geocode_result = gmaps.geocode(address)
+    geo = geocode_result[0]["geometry"]["location"]
+    restaurants =  restaurant(address,geo)
+    trains = train(address,geo)
+    airports = airport(address, geo)
+    print(airports)
+    print(trains)
+
+    if prop_id in list(property_data["PropertyID"]):
         return json.dumps({
-            'error': 'No availability entry found for the property associated with this address.'
+            'narrative': get_narrative(prop_id,restaurants),
+            'prop_id': prop_id
         })
     return json.dumps({
-        'error': 'No properties associated with this address.'
+        'error': 'Invalid property ID.'
     })
+
     
 @app.route('/search')
 def search():
     address = escape(request.args.get('address'))
     jsonString = []
-    print(property_data["Address"].to_string())
-    print(property_data["Address"].str.contains(address))
-    for _, row in property_data[property_data["Address"].str.contains(address)].iterrows():
+    for _, row in property_data[property_data["Address"].str.contains(address, case=False)].iterrows():
         jsonString.append({
             'address': row['Address'],
+            'city': row['City'],
+            'state': row['State'],
             'prop_id': row['PropertyID']
         })
-    print(jsonString)
     return json.dumps({
         'properties': jsonString
     })
+
+
+
+
+
+
+#restaurant
+def restaurant(add, geo1):
+    restaurants = gmaps.places_nearby(geo1, 5000, keyword = "restaurant", type = "restaurant")
+    restaurant_data = []
+    for restaurant in restaurants["results"]:   
+        data = []
+        data.append(restaurant["name"])
+        data.append(restaurant["rating"])
+
+        restaurantDict = gmaps.distance_matrix(add, restaurant['geometry']['location'], units = "imperial", mode="walking")
+        distance = restaurantDict["rows"][0]["elements"][0]["distance"]["text"]
+        duration = restaurantDict["rows"][0]["elements"][0]["duration"]["text"]
+
+        data.append(distance.split()[0])
+
+        data.append(duration)
+        restaurant_data.append(data)
+    return restaurant_data
+
+#trains
+def train(add, geo1):
+    train_stations = gmaps.places_nearby(geo1, 5000, keyword = "train station", type = "train station")
+    train_stations_data = []
+    for train_station in train_stations["results"]:
+        print(train_station)
+        data = []
+        data.append(train_station["name"])
+        data.append(train_station["rating"])
+
+        
+        distanceDict = gmaps.distance_matrix(add, train_station, units = "imperial")
+        distance = distanceDict["rows"][0]["elements"][0]["distance"]["text"]
+        duration = distanceDict["rows"][0]["elements"][0]["duration"]["text"]
+        
+        data.append(distance)
+        data.append(duration)
+        train_stations_data.append()
+    return train_stations_data
+    
+def airport(add, geo1):
+    airport = gmaps.places_nearby(geo1, 10000, keyword = "airport", type = "airport")
+    airport_names = []
+    airport_names.append(airport["results"][0]["name"])
+
+    distanceDict = gmaps.distance_matrix(add, airport_names[0], units = "imperial")
+    distance = distanceDict["rows"][0]["elements"][0]["distance"]["text"]
+    duration = distanceDict["rows"][0]["elements"][0]["duration"]["text"]
+    return (airport_names, distance)
+
+
+
+#coffe
+def coffee(add, geo1):
+    coffee_shop = gmaps.places_nearby(geo1, 5000, keyword = "coffee shop")
+    coffee_shop_names = []
+    for i in coffee_shop["results"]:
+        if len(coffee_shop_names) >= 1:
+            break
+        else:
+            if int(i["rating"]) == (5):
+                coffee_shop_names.append(i["name"])
+    coffee_shop_names = []
+    for i in  restaurant_names:
+        distance = gmaps.distance_matrix(add, i, units = "imperial")
+        coffe_eta.append(distance)
+    return
+
+
+#schools
+def school(add, geo1):
+    school = gmaps.places_nearby(geo1, 500, keyword = "School ", type = "School")
+    school = gmaps.places_nearby(geo1, 500, keyword = "train station", type = "train station")
+    school = []
+    school.append(airport["results"][0]["name"])
+
+    distanceDict = gmaps.distance_matrix(add, school[0], units = "imperial")
+    distance = distanceDict["rows"][0]["elements"][0]["distance"]["text"]
+    duration = distanceDict["rows"][0]["elements"][0]["duration"]["text"]
+    return (school, distance)
+
+#hotels
+def hotel(add, geo1):
+    hotels = gmaps.places_nearby(geo1, 1000, keyword = "hotels ", type = "hotels")
+    hotels = gmaps.places_nearby(geo1, 500, keyword = "train station", type = "train station")
+    hotels = []
+    hotels.append(airport["results"][0]["name"])
+
+    distanceDict = gmaps.distance_matrix(add, hotels[0], units = "imperial")
+    distance = distanceDict["rows"][0]["elements"][0]["distance"]["text"]
+    duration = distanceDict["rows"][0]["elements"][0]["duration"]["text"]
+    return (hotels, distance)
+
+#bus stops
+def busstation(add, geo1):
+    bus_station = gmaps.places_nearby(geo1, 500, keyword = "bus station ", type = "bus station")
+    bus_station = gmaps.places_nearby(geo1, 500, keyword = "train station", type = "train station")
+    bus_station = []
+    bus_station.append(airport["results"][0]["name"])
+
+    distanceDict = gmaps.distance_matrix(add, bus_station[0], units = "imperial")
+    distance = distanceDict["rows"][0]["elements"][0]["distance"]["text"]
+    duration = distanceDict["rows"][0]["elements"][0]["duration"]["text"]
+    return (bus_station, distance)
+
+#lunch
+def lunch(add, geo1):
+    lunch = gmaps.places_nearby(geo1, 500, keyword = "lunch ", type = "restaurant")
+    lunch = gmaps.places_nearby(geo1, 500, keyword = "train station", type = "train station")
+    lunch = []
+    lunch.append(airport["results"][0]["name"])
+
+    distanceDict = gmaps.distance_matrix(add, lunch[0], units = "imperial")
+    distance = distanceDict["rows"][0]["elements"][0]["distance"]["text"]
+    duration = distanceDict["rows"][0]["elements"][0]["duration"]["text"]
+    return (lunch, distance)
