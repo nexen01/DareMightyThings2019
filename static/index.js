@@ -1,38 +1,60 @@
 const FIELDS = ['place_id', 'formatted_address', 'geometry', 'photos'];
 const TYPES = ['address'];
-let queryCount = 0;
+let searchQueryCount = 0;
+let narrativeQueryCount = 0;
 
 function initMap(geometry) {
-    $('#map').empty();
-    const map = new google.maps.Map(document.getElementById('map'), {
-        zoom: 16,
-        center: geometry.location
-    });
-    const marker = new google.maps.Marker({
-        position: geometry.location,
-        map: map,
-        title: 'test'
-    });
-    map.fitBounds(geometry.viewport);
-}
+    const streetViewService = new google.maps.StreetViewService();
 
-function createImage(photos) {
-    $('#image').empty();
-    if (photos.length == 0) return;
-    const photo = photos[0];
-    
+    $('#map').empty();
+    $('#streetview').empty();
+    const map = new google.maps.Map(
+        document.getElementById('map'),
+        {
+            zoom: 16,
+            center: geometry.location
+        }
+    );
+    map.fitBounds(geometry.viewport);
+
+    streetViewService.getPanorama(
+        {
+            location: geometry.location
+        },
+        function (streetViewPanoramaData, status) {
+            if (status === google.maps.StreetViewStatus.OK) {
+                const streetview = new google.maps.StreetViewPanorama(
+                    document.getElementById('streetview'),
+                    {
+                        position: geometry.location
+                    }
+                );
+                map.setStreetView(streetview);
+            } else {
+                const marker = new google.maps.Marker({
+                    position: geometry.location,
+                    map: map,
+                    title: 'Property'
+                });
+                $('#streetview').append($("<p></p>").text("Could not find a StreetView for this property."));
+            }
+        }
+    );
 }
 
 function displayPlace(place, prop_id) {
-    $('#usr12').val(place.formatted_address);
+    console.log(place);
+    $('#addressheader').text(place.formatted_address);
     initMap(place.geometry);
 
     $('#narrative').text('Loading...');
 
+    const narrativeQueryID = ++narrativeQueryCount;
     const url = window.location.href + `narrative?prop_id=${prop_id.toString()}`;
     fetch(url).then(function(response) {
         return response.json();
     }).then(function(json) {
+        if (narrativeQueryID != narrativeQueryCount) return;
         if ('narrative' in json) {
             $('#narrative').text(json.narrative);
         } else if ('error' in json) {
@@ -46,9 +68,9 @@ $(function() {
 
     const placesService = new google.maps.places.PlacesService(document.getElementById('placesAttribution'));
 
-    $('#usr12').on('input', function() {
+    $('#searchbox').on('input', function() {
         const query = encodeURI($(this).val());
-        const queryID = ++queryCount;
+        const searchQueryID = ++searchQueryCount;
     
         $("#results").empty();
     
@@ -60,15 +82,12 @@ $(function() {
         fetch(url).then(function(response) {
             return response.json();
         }).then(function(json) {
-            if (queryCount != queryID) return; // dont load the results if the user inputted a more recent query
+            if (searchQueryCount != searchQueryID) return; // dont load the results if the user inputted a more recent query
             $("#results").empty();
             for (let i = 0; i < Math.min(json.properties.length, 10); i++) {
                 const property = json.properties[i];
-                let row = $("<tr></tr>").attr("class", "searchresult");
-                if (i == 0) row = row.attr('id', 'selected');
-                row.append($("<p></p>").text(`Address: ${property.address}`));
-                //row.append($("<p></p>").text(`Property ID: ${property.prop_id}`));
                 const fullAddress = property.address + ", " + property.city + ", " + property.state;
+                const row = $("<p></p>").attr("class", "row searchresult").text(fullAddress);
                 row.click(function() {
                     placesService.findPlaceFromQuery(
                         {
