@@ -70,14 +70,16 @@ h1 {
     font-weight: bold;
 }
 
-p {
+#content p {
     color: #f2f2f2;
+    font-size: 150%;
 }
 
 #info {
     overflow-y: auto;
 }
 
-li {
+#content li {
     color: #f2f2f2;
+    font-size: 150%;
 }

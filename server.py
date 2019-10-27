@@ -353,7 +353,7 @@ def lookup(add, geo1, key, type ,distance, mode):
         data = []
         data.append(lm["name"])
         if("rating" in lm.keys()):
-            data.append(lm["rating"])
+            data.append(round(lm["rating"],2))
         else:
             data.append(5)
 
