@@ -14,7 +14,8 @@ availability_data = pd.read_pickle("avail_data.pkl")
 place_prop_id = pd.read_pickle("place_data.pkl")
 
 if("Narrative" not in property_data.columns):
-    property_data['Narative'] = ""
+    print("Creating Narrative Columns")
+    property_data['Narrative'] = ""
 
 #Get rid of listings not in both lists
 for i in property_data["PropertyID"]:
@@ -178,8 +179,12 @@ def narrative():
 
        
         if(row["Narrative"] == ""):
+            print(row["Narrative"])
             row["Narrative"] = get_narrative(row)
+            print("Caching")
             property_data.to_pickle("prop_data.pkl")
+        else:
+            print("Already Cached")
 
         jsonString.append({
             'narrative': row["Narrative"],
