@@ -11,6 +11,12 @@ property_data = pd.read_pickle("prop_data.pkl")
 availability_data = pd.read_pickle("avail_data.pkl")
 place_prop_id = pd.read_pickle("place_data.pkl")
 
+#Get rid of listings not in both lists
+for i in property_data["PropertyID"]:
+    if(i not in availability_data["PropertyID"]):
+        property_data = property_data.drop(property_data[ property_data['PropertyID'] == i ].index)
+
+
 prop_labels = '\t'.join(property_data.columns)
 avail_labels = '\t'.join(availability_data.columns)
 
@@ -54,3 +60,12 @@ def narrative():
     return json.dumps({
         'error': 'No properties associated with this address.'
     })
+@app.route('/search')
+def search():
+    address = escape(request.args.get('address'))
+    jsonString = []
+    for d in property_data["Address"].str.contains(address):
+        prop_id = property_data.loc[property_data['Address'] == d][0]
+        jsonString.append({'address':d,'prop_id':prop_id})
+    
+    return json.dumps(jsonString)
