@@ -48,6 +48,7 @@ function displayPlace(place, prop_id) {
     initMap(place.geometry);
 
     $('#narrative').text('Loading...');
+    $('#facts').empty();
 
     const narrativeQueryID = ++narrativeQueryCount;
     const url = window.location.href + `narrative?prop_id=${prop_id.toString()}`;
