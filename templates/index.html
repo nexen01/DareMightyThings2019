@@ -1,43 +1,39 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <title>Bootstrap Test</title>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="styles heet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
-  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
-  <script src="{{ url_for('static', filename='index.js') }}"></script>
-</head>
-
-
-<body>
-  Input
-  <div class="form-group">
-    <label for="usr12">Address:</label>
-    <input type="text" class="form-control" id="usr12">
-    <input type="submit" onclick="handleSubmit()">
-  </div>
-
-  Output
-  <div class="table-responsive">
-    <table class="table">
-      <thead>
-        <tr>
-          <th>Narrative</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-        <td id="narrative">Narrative Goes Here</td>
-      </tr>
-    </tbody>
-  </table>
-  </div>
-  <div id="gmaps-view">
-    
-  </div>
-</body>
-
-
+	<head>
+		<title>Narratives</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<link rel="stylesheet" href="{{ url_for('static', filename='index.css') }}">
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+		<script src="{{ url_for('static', filename='index.js') }}"></script>
+	</head>
+	<body>
+		<p>Input</p>
+		<div class="form-group">
+			<label for="usr12">Address:</label>
+			<input type="text" class="form-control" id="usr12" onchange="">
+			<table class="table" id="results"></table>
+		</div>
+		<p>Output</p>
+		<div class="table-responsive">
+			<table class="table">
+				<thead>
+					<tr>
+						<th>Narrative</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td id="narrative">Narrative Goes Here</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+		<div id="map"></div>
+		<div id="placesAttribution"></div>
+		<script async defer src="https://maps.googleapis.com/maps/api/js?key={{ api_key }}&libraries=places"></script>
+	</body>
 </html>

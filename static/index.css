@@ -1,0 +1,7 @@
+#map {
+    position: relative;
+    overflow: hidden;
+    display: block;
+    height: 500px;
+    width: 100%;
+}
