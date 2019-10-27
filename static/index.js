@@ -40,12 +40,14 @@ function initMap(geometry) {
             }
         }
     );
+
+    return map;
 }
 
 function displayPlace(place, prop_id) {
     console.log(place);
     $('#addressheader').text(place.formatted_address);
-    initMap(place.geometry);
+    const map = initMap(place.geometry);
 
     $('#narrative').text('Loading...');
     $('#facts').empty();
@@ -58,7 +60,22 @@ function displayPlace(place, prop_id) {
         if (narrativeQueryID != narrativeQueryCount) return;
         if ('narrative' in json) {
             $('#narrative').text(json.narrative);
-            tree(json.facts);
+            const list = $("#facts");
+            list.empty();
+            let bounds = place.geometry.viewport;
+            for (let i in json.facts) {
+                fact = json.facts[i];
+                const entry = $('<li></li>').attr('id', i.toString());
+                entry.text(fact.name + " is a " + fact.rating + " star rated establishment located " + fact.distance + " from this property");          
+                list.append(entry);
+                latLng = {lng: Number(fact.lng), lat: Number(fact.lat)}
+                const marker = new google.maps.Marker({
+                    position: latLng,
+                    map: map
+                });
+                bounds.extend(latLng)
+            }
+            map.fitBounds(bounds);
         } else if ('error' in json) {
             $('#narrative').text(json.error);
         }
@@ -66,14 +83,7 @@ function displayPlace(place, prop_id) {
 }
 
 function tree(data) {    
-    const list = $("#facts");
-    list.empty();
-    for (let j = 0; j < data.length; j++) {
-        const i = data[j];
-        const entry = $('<li></li>');
-        entry.text(i.name + " is a " + i.rating + " star rated establishment located " + i.distance + " from this property");          
-        list.append(entry);
-    }
+    
 }
 
 $(function() {
