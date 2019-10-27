@@ -180,7 +180,8 @@ def narrative():
         #jsonString.append(googleData(row))
         return json.dumps({
             'narrative': get_narrative(row),
-            'prop_id': prop_id
+            'prop_id': prop_id,
+            'facts': googleData(row)
         })
     return json.dumps({
         'error': 'Invalid property ID.'

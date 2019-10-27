@@ -57,10 +57,21 @@ function displayPlace(place, prop_id) {
         if (narrativeQueryID != narrativeQueryCount) return;
         if ('narrative' in json) {
             $('#narrative').text(json.narrative);
+            tree(json.facts);
         } else if ('error' in json) {
             $('#narrative').text(json.error);
         }
     });
+}
+
+function tree(data) {    
+    const list = $("#facts");
+    list.empty();
+    for (var i in data) {
+        const entry = $('<li></li>');
+        entry.text(i['name'] + " is a " + i["rating"] + " star rated establishment located " + i["distance"] + " from this property");          
+        list.append(entry);
+    }
 }
 
 $(function() {
