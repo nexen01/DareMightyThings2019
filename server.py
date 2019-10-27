@@ -149,7 +149,7 @@ def googleData(row):
 
     jsonString = []
     for d in data:
-        if(len(d)==0):
+        if(is None):
             continue
         jsonString.append({
                 'name': d[0],
