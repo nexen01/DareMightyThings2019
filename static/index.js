@@ -67,9 +67,10 @@ function displayPlace(place, prop_id) {
 function tree(data) {    
     const list = $("#facts");
     list.empty();
-    for (var i in data) {
+    for (let j = 0; j < data.length; j++) {
+        const i = data[j];
         const entry = $('<li></li>');
-        entry.text(i['name'] + " is a " + i["rating"] + " star rated establishment located " + i["distance"] + " from this property");          
+        entry.text(i.name + " is a " + i.rating + " star rated establishment located " + i.distance + " from this property");          
         list.append(entry);
     }
 }
