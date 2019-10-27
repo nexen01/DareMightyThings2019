@@ -41,7 +41,7 @@ print("Loaded data!")
 def index():
     return render_template('index.html', api_key=API_KEY)
 
-def get_narrative(prop_id,restaurants):
+def get_narrative(prop_id,restaurants,trains,airports,coffee_shops):
     prop_result = property_data[property_data.PropertyID == prop_id].iloc[0]
     prop_str = '\t'.join(str(val) for val in prop_result)
     avail_result = availability_data[availability_data.PropertyID == prop_id].iloc[0]
@@ -70,12 +70,11 @@ def narrative():
     restaurants =  restaurant(address,geo)
     trains = train(address,geo)
     airports = airport(address, geo)
-    print(airports)
-    print(trains)
-
+    coffee_shops = coffee(address, geo)
+    
     if prop_id in list(property_data["PropertyID"]):
         return json.dumps({
-            'narrative': get_narrative(prop_id,restaurants),
+            'narrative': get_narrative(prop_id,restaurants,trains,airports,coffee_shops),
             'prop_id': prop_id
         })
     return json.dumps({
@@ -124,16 +123,15 @@ def restaurant(add, geo1):
 
 #trains
 def train(add, geo1):
-    train_stations = gmaps.places_nearby(geo1, 5000, keyword = "train station", type = "train station")
+    train_stations = gmaps.places_nearby(geo1, 10000, keyword = "train station", type = "train station")
     train_stations_data = []
     for train_station in train_stations["results"]:
-        print(train_station)
         data = []
         data.append(train_station["name"])
         data.append(train_station["rating"])
 
         
-        distanceDict = gmaps.distance_matrix(add, train_station, units = "imperial")
+        distanceDict = gmaps.distance_matrix(add, train_station['geometry']['location'], units = "imperial")
         distance = distanceDict["rows"][0]["elements"][0]["distance"]["text"]
         duration = distanceDict["rows"][0]["elements"][0]["duration"]["text"]
         
@@ -143,31 +141,40 @@ def train(add, geo1):
     return train_stations_data
     
 def airport(add, geo1):
-    airport = gmaps.places_nearby(geo1, 10000, keyword = "airport", type = "airport")
-    airport_names = []
-    airport_names.append(airport["results"][0]["name"])
+    airports = gmaps.places_nearby(geo1, 100000, keyword = "airport", type = "airport")
+    airport_data = []
+    for airport in airports["results"]:
+        data = []
+        data.append(airport["name"])
+        data.append(airport["rating"])
 
-    distanceDict = gmaps.distance_matrix(add, airport_names[0], units = "imperial")
-    distance = distanceDict["rows"][0]["elements"][0]["distance"]["text"]
-    duration = distanceDict["rows"][0]["elements"][0]["duration"]["text"]
-    return (airport_names, distance)
+        distanceDict = gmaps.distance_matrix(add, airport['geometry']['location'], units = "imperial")
+        distance = distanceDict["rows"][0]["elements"][0]["distance"]["text"]
+        duration = distanceDict["rows"][0]["elements"][0]["duration"]["text"]
+
+        data.append(distance)
+        data.append(duration)
+        airport_data.append(data)
+    return airport_data
 
 
 
 #coffe
 def coffee(add, geo1):
-    coffee_shop = gmaps.places_nearby(geo1, 5000, keyword = "coffee shop")
-    coffee_shop_names = []
-    for i in coffee_shop["results"]:
-        if len(coffee_shop_names) >= 1:
-            break
-        else:
-            if int(i["rating"]) == (5):
-                coffee_shop_names.append(i["name"])
-    coffee_shop_names = []
-    for i in  restaurant_names:
-        distance = gmaps.distance_matrix(add, i, units = "imperial")
-        coffe_eta.append(distance)
+    coffee_shops = gmaps.places_nearby(geo1, 5000, keyword = "coffee shop")
+    coffee_shop_data = []
+    for coffee_shop in coffee_shops["results"]:
+        data = []
+        data.append(coffee_shop["name"])
+        data.append(coffee_shop["rating"])
+
+        distanceDict = gmaps.distance_matrix(add, coffee_shop['geometry']['location'], units = "imperial", mode="walking")
+        distance = distanceDict["rows"][0]["elements"][0]["distance"]["text"]
+        duration = distanceDict["rows"][0]["elements"][0]["duration"]["text"]
+
+        data.append(distance)
+        data.append(duration)
+        coffee_shop_data.append(data)
     return
 
 
