@@ -1,32 +1,39 @@
-const FIELDS = ['place_id', 'formatted_address', 'geometry.location'];
+const FIELDS = ['place_id', 'formatted_address', 'geometry', 'photos'];
 const TYPES = ['address'];
+let queryCount = 0;
 
-function initMap(loc) {
+function initMap(geometry) {
     $('#map').empty();
     const map = new google.maps.Map(document.getElementById('map'), {
         zoom: 16,
-        center: loc
+        center: geometry.location
     });
     const marker = new google.maps.Marker({
-        position: loc,
+        position: geometry.location,
         map: map,
         title: 'test'
     });
+    map.fitBounds(geometry.viewport);
 }
 
-function displayPlace(place) {
+function createImage(photos) {
+    $('#image').empty();
+    if (photos.length == 0) return;
+    const photo = photos[0];
+    
+}
+
+function displayPlace(place, prop_id) {
     $('#usr12').val(place.formatted_address);
-    initMap(place.geometry.location);
+    initMap(place.geometry);
 
     $('#narrative').text('Loading...');
 
-    const url = window.location.href + `narrative?place_id=${place.place_id.toString()}`;
+    const url = window.location.href + `narrative?prop_id=${prop_id.toString()}`;
     fetch(url).then(function(response) {
         return response.json();
     }).then(function(json) {
-        console.log(json);
         if ('narrative' in json) {
-            console.log(json.prop_id);
             $('#narrative').text(json.narrative);
         } else if ('error' in json) {
             $('#narrative').text(json.error);
@@ -34,80 +41,52 @@ function displayPlace(place) {
     });
 }
 
-function handleOnChange() {
-    const query = encodeURI($('#usr12').val());
-
-    $("#results").empty();
-    $("#results").append($("<p></p>").text("Loading..."));
-
-    const url = window.location.href + `search?address=${query}`;
-    console.log(url);
-    fetch(url).then(function(response) {
-        return response.json();
-    }).then(function(json) {
-        console.log(json);
-        $("#results").empty();
-        for (let i = 0; i < json.properties.length; i++) {
-            const property = json.properties[i];
-            const row = $("<tr></tr>");
-            row.append($("<p></p>").text(`Address: ${property.address}`));
-            row.append($("<p></p>").text(`Property ID: ${property.prop_id}`));
-            $("#results").append(row);
-        }
-    });
-}
-
 $(function() {
     console.log("index.js is running!");
 
-
-
-    /**
-    const autocompleteService = new google.maps.places.AutocompleteService();
     const placesService = new google.maps.places.PlacesService(document.getElementById('placesAttribution'));
 
-    const autocomplete = new google.maps.places.Autocomplete(
-        document.getElementById('usr12'),
-        {
-            fields: FIELDS,
-            types: TYPES
-        }
-    );
-
-    autocomplete.addListener('place_changed', function() {
-        const place = autocomplete.getPlace();
-        console.log(place);
+    $('#usr12').on('input', function() {
+        const query = encodeURI($(this).val());
+        const queryID = ++queryCount;
     
-        if ('formatted_address' in place) { // if the user selected a complete query
-            displayPlace(place);
-        } else { // if the user pressed enter prematurely
-            autocompleteService.getPlacePredictions(
-                {
-                    input: place.name,
-                    offset: place.name.length,
-                    types: TYPES
-                },
-                function(predictions, status) {
-                    if (predictions && predictions.length > 0) {
-                        const prediction = predictions[0];
-                        placesService.getDetails(
-                            {
-                                placeId: prediction.place_id,
-                                fields: FIELDS
-                            },
-                            function(predicted_place, status) {
-                                console.log(predicted_place);
-                                displayPlace(predicted_place);
+        $("#results").empty();
+    
+        if (query.length == 0) return;
+    
+        $("#results").append($("<p></p>").text("Loading..."));
+    
+        const url = window.location.href + `search?address=${query}`;
+        fetch(url).then(function(response) {
+            return response.json();
+        }).then(function(json) {
+            if (queryCount != queryID) return; // dont load the results if the user inputted a more recent query
+            $("#results").empty();
+            for (let i = 0; i < Math.min(json.properties.length, 10); i++) {
+                const property = json.properties[i];
+                let row = $("<tr></tr>").attr("class", "searchresult");
+                if (i == 0) row = row.attr('id', 'selected');
+                row.append($("<p></p>").text(`Address: ${property.address}`));
+                //row.append($("<p></p>").text(`Property ID: ${property.prop_id}`));
+                const fullAddress = property.address + ", " + property.city + ", " + property.state;
+                row.click(function() {
+                    placesService.findPlaceFromQuery(
+                        {
+                            query: fullAddress,
+                            fields: FIELDS
+                        },
+                        function(places, status) {
+                            if (places.length > 0) {
+                                displayPlace(places[0], property.prop_id);
+                            } else {
+                                alert(`Could not find ${fullAddress} on Google Maps`);
                             }
-                        )
-                    } else {
-                        $('#map').empty();
-                        $('#narrative').text('No results found.');
-                    }
-                }
-            )
-        }
+                        }
+                    );
+                });
+                $("#results").append(row);
+            }
+        });
     });
-    */
 });
 

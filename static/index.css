@@ -2,6 +2,10 @@
     position: relative;
     overflow: hidden;
     display: block;
-    height: 500px;
+    height: 100%;
     width: 100%;
+}
+
+.half {
+    height: 50vh;
 }
