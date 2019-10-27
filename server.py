@@ -63,7 +63,13 @@ def get_narrative(prop_id,restaurants,trains,airports,coffee_shops):
 @app.route('/narrative')
 def narrative():
     prop_id = escape(request.args.get('prop_id'))
-    address = escape(request.args.get('address'))
+    lookup = property_data[property_data.PropertyID == prop_id]
+    if (len(lookup) == 0):
+        return json.dumps({
+            'error': 'Invalid property ID.'
+        })
+    row = lookup.iloc[0]
+    address = row['Address'] + ', ' + row['City'] + " " + row["State"]
     print("Narrative Request Recieved: Address=" + address + " place_id=" +prop_id)
     geocode_result = gmaps.geocode(address)
     geo = geocode_result[0]["geometry"]["location"]
@@ -137,7 +143,7 @@ def train(add, geo1):
         
         data.append(distance)
         data.append(duration)
-        train_stations_data.append()
+        train_stations_data.append(data)
     return train_stations_data
     
 def airport(add, geo1):
@@ -175,7 +181,7 @@ def coffee(add, geo1):
         data.append(distance)
         data.append(duration)
         coffee_shop_data.append(data)
-    return
+    return coffee_shop_data
 
 
 #schools
